@@ -1,0 +1,35 @@
+# GCP Compute Engine — backend-only deployment
+# Usage: docker compose -f docker-compose.gcp.yml up -d --build
+#
+# Set these env vars in your .env file on the VM before running:
+#   GEMINI_API_KEY=...
+#   DATABASE_URL=...
+#   CORS_ORIGIN=https://your-frontend.vercel.app
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sentinelqa-backend
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - SCREENSHOT_DIR=/app/screenshots
+      - CORS_ORIGIN=${CORS_ORIGIN}
+    volumes:
+      - ./screenshots:/app/screenshots
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
