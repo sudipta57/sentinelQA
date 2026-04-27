@@ -1,0 +1,6 @@
+data: {"type": "agent_thought", "step": "crawl_app", "payload": "Starting crawl of http://localhost:3001...", "timestamp": "2026-04-24T11:56:44.854047"}
+
+data: {"type": "tool_call", "step": "crawl_app", "payload": {"url": "http://localhost:3001"}, "timestamp": "2026-04-24T11:56:44.854084"}
+
+data: {"type": "error", "step": "run_agent", "payload": {"message": "Could not reach http://localhost:3001: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/\nCall log:\nnavigating to \"http://localhost:3001/\", waiting until \"networkidle\"\n"}, "timestamp": "2026-04-24T11:56:45.119976"}
+
