@@ -45,6 +45,7 @@ class SeverityEnum(str, Enum):
     Critical = "Critical"
     Major = "Major"
     Minor = "Minor"
+    false_positive = "false_positive"
 
 
 class ClassifiedBug(BaseModel):

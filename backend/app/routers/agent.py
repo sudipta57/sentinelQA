@@ -123,6 +123,14 @@ async def run_agent(request: RunAgentRequest) -> StreamingResponse:
                     })
                     bug = await classify_bug(tc, result)
 
+                    # Skip false positives — never add to report
+                    if bug.severity.value == "false_positive" or \
+                       "false positive" in bug.root_cause_hypothesis.lower():
+                        logger.info("Skipping false positive: %s", bug.title)
+                        yield make_event(SSEEventType.agent_thought, "classify_bug",
+                            f"Skipping false positive: '{bug.title[:50]}' — element appears to be working as designed.")
+                        continue  # don't add to all_bugs, don't call suggest_fix
+
                     # Generate fix suggestion for Critical and Major bugs only
                     if bug.severity.value in ("Critical", "Major"):
                         yield make_event(SSEEventType.agent_thought, "suggest_fix",
@@ -202,6 +210,18 @@ async def run_agent(request: RunAgentRequest) -> StreamingResponse:
                             "error_preview": (result.error_message or "")[:120]
                         })
                         bug = await classify_bug(tc, result)
+
+                        # Skip false positives — never add to report
+                        if bug.severity.value == "false_positive" or \
+                           "false positive" in bug.root_cause_hypothesis.lower():
+                            logger.info("Skipping false positive (reflect): %s", bug.title)
+                            yield make_event(SSEEventType.agent_thought, "classify_bug",
+                                f"Skipping false positive: '{bug.title[:50]}' — element appears to be working as designed.")
+                            yield make_event(SSEEventType.tool_result, "execute_test", {
+                                "test_id": result.test_id, "passed": result.passed,
+                                "error_message": result.error_message, "screenshot_path": result.screenshot_path
+                            })
+                            continue
 
                         # Generate fix suggestion for Critical and Major bugs
                         if bug.severity.value in ("Critical", "Major"):

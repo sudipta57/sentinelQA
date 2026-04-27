@@ -75,11 +75,15 @@ async def generate_report(
     settings = get_settings()
     passed = sum(1 for r in all_results if r.passed)
     failed = len(all_results) - passed
-    critical_bugs = [b for b in all_bugs if b.severity == SeverityEnum.Critical]
-    major_bugs = [b for b in all_bugs if b.severity == SeverityEnum.Major]
-    minor_bugs = [b for b in all_bugs if b.severity == SeverityEnum.Minor]
 
-    summary = f"Automated scan of {app_url} found {len(all_bugs)} bug(s) across {len(all_results)} test cases."
+    # Filter out false positives — they must never appear in the final report
+    real_bugs = [b for b in all_bugs if b.severity != SeverityEnum.false_positive]
+
+    critical_bugs = [b for b in real_bugs if b.severity == SeverityEnum.Critical]
+    major_bugs = [b for b in real_bugs if b.severity == SeverityEnum.Major]
+    minor_bugs = [b for b in real_bugs if b.severity == SeverityEnum.Minor]
+
+    summary = f"Automated scan of {app_url} found {len(real_bugs)} bug(s) across {len(all_results)} test cases."
     recommendations = [
         "Fix all Critical severity bugs before next release.",
         "Add input validation to all form fields.",
@@ -89,7 +93,7 @@ async def generate_report(
     try:
         genai.configure(api_key=settings.gemini_api_key)
         model = genai.GenerativeModel(settings.gemini_model)
-        prompt = _build_prompt(all_results, all_bugs, app_url)
+        prompt = _build_prompt(all_results, real_bugs, app_url)
         response_text = await call_gemini_with_retry(model, prompt)
 
         if response_text.strip():

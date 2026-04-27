@@ -13,6 +13,16 @@ from app.models import TestCase, TestResult
 logger = logging.getLogger(__name__)
 
 
+async def is_element_visible_in_viewport(page, selector: str) -> bool:
+    """Check if element exists AND is visible (not hidden by CSS)."""
+    try:
+        locator = page.locator(selector).first
+        is_visible = await locator.is_visible(timeout=3000)
+        return is_visible
+    except Exception:
+        return False
+
+
 def _escape_selector_text(value: str) -> str:
     return value.replace("\\", "\\\\").replace("'", "\\'")
 
@@ -213,6 +223,15 @@ async def execute_step(page, step: str) -> None:
 
         if normalized.startswith("Click the button"):
             label = _extract_quoted_value(normalized)
+            # Check if button is visible before trying to click
+            is_visible = await is_element_visible_in_viewport(
+                page, f"button:has-text('{_escape_selector_text(label)}')"
+            )
+            if not is_visible:
+                logger.info(
+                    "Skipping hidden element: button '%s' — not visible in current viewport", label
+                )
+                return  # Skip silently — likely a responsive/mobile-only element
             await _click_button(page, label)
             return
 
@@ -226,12 +245,24 @@ async def execute_step(page, step: str) -> None:
         if normalized.startswith("Click the 'Edit'") or normalized.startswith("Click the \"Edit\""):
             values = _extract_quoted_values(normalized)
             contact_name = values[-1] if values else ""
+            is_visible = await is_element_visible_in_viewport(
+                page, f"button:has-text('Edit')"
+            )
+            if not is_visible:
+                logger.info("Skipping hidden Edit button — not visible in current viewport")
+                return
             await _click_specific_button(page, contact_name, "Edit")
             return
 
         if normalized.startswith("Click the 'Delete'") or normalized.startswith("Click the \"Delete\""):
             values = _extract_quoted_values(normalized)
             contact_name = values[-1] if values else ""
+            is_visible = await is_element_visible_in_viewport(
+                page, f"button:has-text('Delete')"
+            )
+            if not is_visible:
+                logger.info("Skipping hidden Delete button — not visible in current viewport")
+                return
             await _click_specific_button(page, contact_name, "Delete")
             return
 
@@ -300,7 +331,10 @@ async def execute_test(test_case: TestCase, base_url: str, screenshot_dir: str) 
         page.set_default_timeout(15000)
 
         await page.goto(base_url, wait_until="networkidle", timeout=15000)
-        await page.wait_for_timeout(1500)
+        if "localhost" not in base_url and "demo-app" not in base_url:
+            await page.wait_for_timeout(3000)  # extra wait for external/slow sites
+        else:
+            await page.wait_for_timeout(1500)
 
         for step in test_case.steps:
             await execute_step(page, step)

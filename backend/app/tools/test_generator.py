@@ -41,10 +41,14 @@ _VALID_TEST_TYPES = {
 
 
 def _build_prompt(sitemap: Sitemap, context: str, max_test_cases: int) -> str:
+    is_external = "localhost" not in sitemap.base_url and "demo-app" not in sitemap.base_url
+    effective_max = min(10, max_test_cases) if is_external else max_test_cases
+
     lines: list[str] = [
         "You are an expert QA engineer. You have crawled a web application and discovered the following structure:",
         "",
         f"APP URL: {sitemap.base_url}",
+        "VIEWPORT: 1280x800 desktop resolution. Do not generate tests for mobile-specific UI patterns.",
     ]
 
     if context.strip():
@@ -68,7 +72,7 @@ def _build_prompt(sitemap: Sitemap, context: str, max_test_cases: int) -> str:
     lines.extend(
         [
             "",
-            f"Your task: Generate between 8 and {max_test_cases} test cases that thoroughly test this application.",
+            f"Your task: Generate between 8 and {effective_max} test cases that thoroughly test this application.",
             "",
             "You MUST include test cases of ALL these types:",
             "1. form_validation - test submitting forms with empty/invalid data",
@@ -77,7 +81,15 @@ def _build_prompt(sitemap: Sitemap, context: str, max_test_cases: int) -> str:
             "4. error_handling - test edge cases like deleting items, submitting bad data",
             "5. edge_case - test unusual but valid interactions",
             "",
-            "Rules:",
+            "IMPORTANT RULES FOR TEST GENERATION:",
+            "- Do NOT generate tests for elements that appear to be mobile-only (hamburger menus, mobile navs, drawer toggles)",
+            "  unless you see clear evidence the site is mobile-first",
+            "- Do NOT generate tests that check for hover-only UI elements",
+            "- Do NOT generate tests for cookie banners, popups, or overlays that may or may not appear depending on session state",
+            "- Focus on CORE functionality: forms, navigation, data display, CRUD operations",
+            f"- {'For this external website, assume elements requiring specific session state (login, cookies) may not be testable. Maximum ' + str(effective_max) + ' test cases.' if is_external else 'Full test coverage is expected for this local/demo app.'}",
+            "",
+            "General Rules:",
             "- Focus on flows a real user would do, not just checking if elements exist",
             "- Each test case must have concrete, executable steps (click X, type Y, check Z)",
             "- Steps must reference actual element labels, placeholders, or IDs found in the sitemap",

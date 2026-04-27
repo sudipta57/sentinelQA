@@ -52,16 +52,25 @@ def _build_prompt(test_case: TestCase, result: TestResult) -> str:
         f"  Error message: {result.error_message or 'No error message captured — test steps completed but assertion failed'}\n"
         f"  Screenshot captured: {'Yes — ' + result.screenshot_path if result.screenshot_path else 'No screenshot available'}\n"
         "\n"
+        "IMPORTANT — FALSE POSITIVE DETECTION:\n"
+        "Before classifying severity, determine if this is a genuine bug or a false positive. A false positive is when:\n"
+        "  - The error mentions 'element not visible', 'hidden', 'not in viewport' — this is likely a responsive design element working correctly\n"
+        "  - The error is a Playwright timeout on an external/slow site — this may be a network issue, not a bug\n"
+        "  - The element is a mobile-only component being tested on desktop (hamburger menus, mobile nav drawers, etc.)\n"
+        "  - The error says 'element intercepts pointer events' — overlapping elements are common in modern UIs\n"
+        "If you determine this is a FALSE POSITIVE, return severity as 'false_positive' with an appropriate title and root_cause_hypothesis explaining why.\n"
+        "\n"
         "SEVERITY DEFINITIONS (choose exactly one):\n"
-        "  Critical - The application crashes, data is corrupted or lost, or a core user-facing feature is completely non-functional (e.g. cannot add contacts at all, delete destroys wrong data, form accepts clearly invalid input and corrupts state).\n"
-        "  Major    - A feature does not work correctly but the app does not crash (e.g. search returns wrong results, edit saves to wrong record, UI count never updates).\n"
-        "  Minor    - A cosmetic issue, a missing polish detail, or a partial degradation that does not block the user's core task (e.g. a label is wrong, a counter badge is stale, styling is broken).\n"
+        "  Critical     - The application crashes, data is corrupted or lost, or a core user-facing feature is completely non-functional (e.g. cannot add contacts at all, delete destroys wrong data, form accepts clearly invalid input and corrupts state).\n"
+        "  Major        - A feature does not work correctly but the app does not crash (e.g. search returns wrong results, edit saves to wrong record, UI count never updates).\n"
+        "  Minor        - A cosmetic issue, a missing polish detail, or a partial degradation that does not block the user's core task (e.g. a label is wrong, a counter badge is stale, styling is broken).\n"
+        "  false_positive - This is NOT a real bug. The failure is due to a hidden/mobile-only element, a network timeout on an external site, or a test expectation that doesn't match the app's actual design intent.\n"
         "\n"
         "Your task: Respond ONLY with a valid JSON object. No explanation, no markdown, no code fences. Just raw JSON.\n"
         "\n"
         "Required JSON schema:\n"
         "{\n"
-        "  \"severity\": \"Critical\" | \"Major\" | \"Minor\",\n"
+        "  \"severity\": \"Critical\" | \"Major\" | \"Minor\" | \"false_positive\",\n"
         "  \"title\": \"Short bug title (max 10 words, like a Jira ticket title)\",\n"
         "  \"root_cause_hypothesis\": \"One sentence explaining the likely root cause in plain English\",\n"
         "  \"steps_to_reproduce\": [\"Step 1\", \"Step 2\", \"Step 3\"]\n"
@@ -77,10 +86,12 @@ def _build_prompt(test_case: TestCase, result: TestResult) -> str:
 
 def _normalize_severity(raw_severity: str) -> str:
     severity = raw_severity.strip()
-    if severity in {"Critical", "Major", "Minor"}:
+    if severity in {"Critical", "Major", "Minor", "false_positive"}:
         return severity
 
     lowered = severity.lower()
+    if lowered in {"false_positive", "false positive", "fp", "not_a_bug", "not a bug"}:
+        return "false_positive"
     if lowered in {"critical", "high", "p1", "blocker"}:
         return "Critical"
     if lowered in {"major", "medium", "p2", "moderate"}:
