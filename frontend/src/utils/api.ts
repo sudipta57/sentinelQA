@@ -1,7 +1,7 @@
 import type { SSEEvent } from "../types";
 
 const env = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env;
-export const BACKEND_URL = env?.VITE_BACKEND_URL || "http://localhost:8000";
+export const BACKEND_URL = env?.VITE_BACKEND_URL || "http://34.122.134.236:8000";
 
 export async function* streamAgentRun(url: string): AsyncGenerator<SSEEvent> {
   const response = await fetch(`${BACKEND_URL}/api/run-agent`, {
