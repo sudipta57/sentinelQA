@@ -66,10 +66,10 @@ export function useAgentStream(): UseAgentStreamReturn {
     setIsRunning(true);
     let lastEventTime = Date.now();
     const timeoutCheckId = window.setInterval(() => {
-      if (Date.now() - lastEventTime > 60_000) {
+      if (Date.now() - lastEventTime > 120_000) {
         window.clearInterval(timeoutCheckId);
         setError(
-          "Stream timed out after 60s with no response. The agent may still be running — " +
+          "Stream timed out after 120s with no response. The agent may still be running — " +
             "check http://localhost:8000/api/last-run for the cached result, or try again."
         );
         setIsRunning(false);

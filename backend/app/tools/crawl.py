@@ -101,7 +101,7 @@ async def crawl_app(url: str, max_pages: int = 5) -> Sitemap:
             page = await browser.new_page()
 
             try:
-                await page.goto(url, wait_until="networkidle", timeout=30000)
+                await page.goto(url, wait_until="networkidle", timeout=45000)
                 await page.wait_for_timeout(2000)
             except Exception as e:
                 raise ValueError(f"Could not reach {url}: {e}") from e
