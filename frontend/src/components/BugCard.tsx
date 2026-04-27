@@ -7,9 +7,9 @@ interface BugCardProps {
 }
 
 const SEVERITY_STYLES: Record<ClassifiedBug["severity"], string> = {
-  Critical: "bg-red-500/25 text-red-200",
-  Major: "bg-amber-500/25 text-amber-200",
-  Minor: "bg-teal-500/25 text-teal-200",
+  Critical: "border-rose-200 bg-rose-50 text-rose-700",
+  Major: "border-amber-200 bg-amber-50 text-amber-700",
+  Minor: "border-sky-200 bg-sky-50 text-sky-700",
 };
 
 function toAssetUrl(backendUrl: string, path: string): string {
@@ -32,39 +32,37 @@ export default function BugCard({ bug, backendUrl }: BugCardProps): JSX.Element 
   }, [backendUrl, bug.screenshot_path]);
 
   return (
-    <article className="space-y-3 rounded-lg border border-gray-800 bg-gray-900 p-4">
+    <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-colors hover:border-gray-300">
       <div className="flex items-start justify-between gap-3">
-        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${SEVERITY_STYLES[bug.severity]}`}>
+        <div>
+          <h4 className="text-base font-semibold text-gray-900">{bug.title}</h4>
+          <p className="mt-1 text-sm text-gray-500">{bug.root_cause_hypothesis}</p>
+        </div>
+        <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${SEVERITY_STYLES[bug.severity]}`}>
           {bug.severity}
         </span>
       </div>
 
-      <div>
-        <h4 className="text-base font-semibold text-white">{bug.title}</h4>
-        <p className="mt-1 text-sm italic text-gray-400">{bug.root_cause_hypothesis}</p>
-      </div>
-
       {bug.fix_suggestion && (
-        <div className="rounded-lg border border-green-900 bg-green-950/30 p-3">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-lg">🔧</span>
-            <span className="font-semibold uppercase tracking-widest text-green-400">How to Fix</span>
+        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            🔧 Suggested Fix
           </div>
-          <p className="text-sm leading-relaxed text-green-300">{bug.fix_suggestion}</p>
+          <p className="text-sm leading-relaxed text-emerald-800">{bug.fix_suggestion}</p>
         </div>
       )}
 
-      <div>
+      <div className="mt-3">
         <button
           type="button"
           onClick={() => setShowSteps((value) => !value)}
-          className="text-sm font-medium text-gray-300 underline-offset-2 hover:text-white hover:underline"
+          className="text-xs text-gray-400 hover:text-gray-600"
         >
           Steps to Reproduce {showSteps ? "▲" : "▼"}
         </button>
 
         {showSteps && (
-          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-gray-300">
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-gray-600">
             {bug.steps_to_reproduce.map((step, index) => (
               <li key={`${bug.test_id}-step-${index}`}>{step}</li>
             ))}
@@ -77,14 +75,19 @@ export default function BugCard({ bug, backendUrl }: BugCardProps): JSX.Element 
           href={screenshotUrl}
           target="_blank"
           rel="noreferrer"
-          className="block overflow-hidden rounded border border-gray-700"
+          className="mt-3 block"
         >
-          <img src={screenshotUrl} alt={bug.title} className="h-36 w-full object-cover" loading="lazy" />
+          <img
+            src={screenshotUrl}
+            alt={bug.title}
+            className="max-h-40 w-full cursor-pointer rounded-lg border border-gray-200 object-cover transition-colors hover:border-indigo-300"
+            loading="lazy"
+          />
         </a>
       )}
 
-      <div className="text-xs text-gray-600">
-        <span className="font-mono">{bug.test_id}</span>
+      <div className="mt-3 border-t border-gray-100 pt-3">
+        <span className="font-mono text-xs text-gray-300">{bug.test_id}</span>
       </div>
     </article>
   );

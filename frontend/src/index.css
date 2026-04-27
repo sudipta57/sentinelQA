@@ -2,33 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar for dark theme */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #374151 #111827;
-}
-
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #111827;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: #374151;
-  border-radius: 3px;
-}
-
 html,
 body,
 #root {
   margin: 0;
   min-height: 100%;
   min-width: 320px;
-  background: #030712;
-  color: #ffffff;
+  background: #f9fafb;
+  color: #111827;
 }
 
 @keyframes streamCardFade {

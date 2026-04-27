@@ -9,15 +9,15 @@ export default function App(): JSX.Element {
   const { events, isRunning, currentStep, report, error, startRun } = useAgentStream();
 
   return (
-    <div className="h-screen bg-gray-950 text-white">
+    <div className="h-screen bg-gray-50 text-gray-900 antialiased">
       <div className="flex h-full flex-col">
         <Header />
 
-        <div className="border-b border-gray-800 px-4 py-4 md:px-6">
+        <div className="">
           <InputPanel onRun={startRun} isRunning={isRunning} currentStep={currentStep} />
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <div className="flex min-h-0 flex-1 flex-col gap-6 p-6 lg:flex-row">
           <div className="min-h-0 w-full lg:w-2/5">
             <StreamPanel events={events} isRunning={isRunning} />
           </div>
